@@ -6,6 +6,8 @@ def translate2bytes(filepaths: list[str], output_dir: str):
 	Checks for files in output directory and translates those not yet present."""
 	errors = []
 	output_dir = os.path.abspath(output_dir)
+	if not os.path.isdir(output_dir):
+		os.mkdir(output_dir)
 	translated_files = [os.path.join(output_dir, file) for file in os.listdir(output_dir)]
 	if not isinstance(filepaths, list):
 		raise ValueError("filepaths variable must be a list of filepaths")
