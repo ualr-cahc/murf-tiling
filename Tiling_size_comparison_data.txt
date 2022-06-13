@@ -1,0 +1,126 @@
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom8', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (8, 8), 'resume': True}))
+translate2bytes time 0.0m 11s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (8, 8)
+Tile time: 0.0m 3s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (8, 8)
+Tile time: 0.0m 2s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (8, 8)
+Tile time: 0.0m 2s
+makeTiles time 0.0m 17s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom9', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (9, 9), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (9, 9)
+Tile time: 0.0m 3s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (9, 9)
+Tile time: 0.0m 2s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (9, 9)
+Tile time: 0.0m 2s
+makeTiles time 0.0m 6s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom10', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (10, 10), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (10, 10)
+Tile time: 0.0m 3s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (10, 10)
+Tile time: 0.0m 2s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (10, 10)
+Tile time: 0.0m 2s
+makeTiles time 0.0m 6s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom11', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (11, 11), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (11, 11)
+Tile time: 0.0m 3s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (11, 11)
+Tile time: 0.0m 2s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (11, 11)
+Tile time: 0.0m 2s
+makeTiles time 0.0m 7s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom12', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (12, 12), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (12, 12)
+Tile time: 0.0m 3s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (12, 12)
+Tile time: 0.0m 3s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (12, 12)
+Tile time: 0.0m 2s
+makeTiles time 0.0m 8s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom13', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (13, 13), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (13, 13)
+Tile time: 0.0m 4s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (13, 13)
+Tile time: 0.0m 6s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (13, 13)
+Tile time: 0.0m 2s
+makeTiles time 0.0m 12s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom14', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (14, 14), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (14, 14)
+Tile time: 0.0m 6s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (14, 14)
+Tile time: 0.0m 17s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (14, 14)
+Tile time: 0.0m 2s
+makeTiles time 0.0m 24s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom15', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (15, 15), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (15, 15)
+Tile time: 0.0m 12s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (15, 15)
+Tile time: 0.0m 52s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (15, 15)
+Tile time: 0.0m 2s
+makeTiles time 1.0m 6s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom16', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (16, 16), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (16, 16)
+Tile time: 0.0m 32s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (16, 16)
+Tile time: 3.0m 19s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (16, 16)
+Tile time: 0.0m 2s
+makeTiles time 3.0m 53s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom17', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (17, 17), 'resume': True}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (17, 17)
+Tile time: 1.0m 34s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (17, 17)
+Tile time: 13.0m 15s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (17, 17)
+Tile time: 0.0m 2s
+makeTiles time 13.0m 21s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom18', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (18, 18), 'resume': True, 'webviewer': 'leaflet'}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (18, 18)
+Tile time: 5.0m 32s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (18, 18)
+Tile time: 60.0m 39s
+d:/murf-tiling/tests/zoom_levels/translated\1998_AHTD_060772_LITRK_Hinson_Rd_Sidewalks_25.tif (18, 18)
+Tile time: 0.0m 4s
+makeTiles time 66.0m 15s
+---------------------------------------------------------------------
+
+makeTiles(('d:/Metroplan Files Renamed/', 'd:/murf-tiling/tests/zoom_levels/zoom19', 'd:/murf-tiling/tests/zoom_levels/translated', {'nb_processes': 8, 'zoom': (19, 19), 'resume': True, 'webviewer': 'leaflet'}))
+translate2bytes time 0.0m 0s
+d:/murf-tiling/tests/zoom_levels/translated\1960_Metro_Area_Office_and_Commercial_Uses.tif (19, 19)
+Tile time: 17.0m 56s
+d:/murf-tiling/tests/zoom_levels/translated\1970s_LITRK-NOLIT_SMSA_Industrial.tif (19, 19)
