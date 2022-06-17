@@ -14,14 +14,13 @@ from time import perf_counter
 def makeTiles(input_filepaths, tile_output_dir, translate_output_dir, tile_options):
     if not os.path.isdir(tile_output_dir):
         os.mkdir(tile_output_dir)
+    if not os.path.isdir(translate_output_dir):
+        os.mkdir(translate_output_dir)
 
     # Translate 
     translate2bytes(input_filepaths, translate_output_dir)
     translated_filepaths = [os.path.join(translate_output_dir, file) for file in os.listdir(translate_output_dir)]
 
-    
-    if not os.path.isdir(tile_output_dir):
-        os.mkdir(tile_output_dir)
     for filepath in translated_filepaths:
         dirname = os.path.splitext(os.path.split(filepath)[-1])[0]
         dirpath = os.path.join(tile_output_dir, dirname)
