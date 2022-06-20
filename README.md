@@ -32,6 +32,6 @@ git clone https://github.com/ualr-cahc/murf-tiling
     ```
 
 1. install requirements.txt:
-```
-python -m pip install -r requirements.txt
-```
+    ```
+    python -m pip install -r requirements.txt
+    ```
