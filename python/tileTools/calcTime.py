@@ -3,6 +3,7 @@ from time import perf_counter
 
 def calcTime(func):
     def inner1(*args, **kwargs):
+        print(f"{func.__name__}({args, kwargs})")
         begin = perf_counter()
         func(*args, **kwargs)
         end = perf_counter()
