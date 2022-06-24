@@ -1,12 +1,12 @@
 #! decorator function to time other functions
-from time import perf_counter
+from time import perf_counter_ns
 
 def calcTime(func):
     def inner1(*args, **kwargs):
         print(f"{func.__name__}({args, kwargs})")
-        begin = perf_counter()
+        begin = perf_counter_ns()
         func(*args, **kwargs)
-        end = perf_counter()
+        end = perf_counter_ns()
         time = end-begin
-        print(func.__name__, f"time {time//60}m {round(time%60)}s")
+        return time
     return inner1

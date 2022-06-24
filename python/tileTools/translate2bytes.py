@@ -18,6 +18,7 @@ def translate2bytes(input_filepaths: list[str], output_dir: str):
 		filename = os.path.split(filepath)[-1]
 		translated_filepath = os.path.join(output_dir, filename)
 		if translated_filepath not in translated_files:
+			Translate(translated_filepath, filepath, outputType=GDT_Byte)
 			try:
 				Translate(translated_filepath, filepath, outputType=GDT_Byte)
 			except Exception as err:

@@ -54,8 +54,7 @@ def writeLeaflet(layers: dict[str, int], maxZoom: int, title: str) -> str:
             //  .. OpenStreetMap
             var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors', maxNativeZoom: 18, maxZoom: """ + str(maxZoom) + """});
 
-            // Overlay layers (TMS)
-            """ + "\n            ".join(f"var {name} = L.tileLayer('./{layers_fixed[name]['oldname']}/{{z}}/{{x}}/{{y}}.png', {{tms: true, opacity: 0.7, attribution: '', maxZoom:{maxZoom}, maxNativeZoom: {layers_fixed[name]['maxNativeZoom']}}});" for name in layers_fixed)+"""                       
+            """ + "\n            ".join(f"var {name} = L.tileLayer('./{layers_fixed[name]['oldname']}/{{z}}/{{x}}/{{y}}.png', {{opacity: 0.7, attribution: '', maxZoom:{maxZoom}, maxNativeZoom: {layers_fixed[name]['maxNativeZoom']}}});" for name in layers_fixed)+"""                       
 
             // Map
             var map = L.map('map', {
