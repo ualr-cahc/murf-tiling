@@ -1,15 +1,20 @@
 import os
 from osgeo.gdal import GDT_Byte, Translate
 from tileTools.calcTime import calcTime
+from tileTools.dbConnect import dbConnect
+
+@calcTime
+def translate2bytes(translated_filepath: str, filepath: str):
+	"""Wrapper function for gdal.Translate, decorated with calcTime.
+	Returns duration of function in nanoseconds and any error as text."""
+	Translate(translated_filepath, filepath, outputType=GDT_Byte)
+
 
 @calcTime
 def translate2bytes(input_filepaths: list[str], output_dir: str):
 	"""Input a list of .tif filepaths and an output directory, returns list of errors.
 	Checks for files in output directory and translates those not yet present."""
-	errors = []
 	output_dir = os.path.abspath(output_dir)
-	if not os.path.isdir(output_dir):
-		os.mkdir(output_dir)
 	translated_files = [os.path.join(output_dir, file) for file in os.listdir(output_dir)]
 	if not isinstance(input_filepaths, list):
 		print(input_filepaths)
@@ -18,10 +23,8 @@ def translate2bytes(input_filepaths: list[str], output_dir: str):
 		filename = os.path.split(filepath)[-1]
 		translated_filepath = os.path.join(output_dir, filename)
 		if translated_filepath not in translated_files:
-			Translate(translated_filepath, filepath, outputType=GDT_Byte)
 			try:
-				Translate(translated_filepath, filepath, outputType=GDT_Byte)
+				translatetime, _ = translateOne(translated_filepath, filepath, outputType=GDT_Byte)
 			except Exception as err:
-				errors.append((filepath, err))
-				print(err)
-	return errors
+				
+				
