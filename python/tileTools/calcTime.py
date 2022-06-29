@@ -1,7 +1,8 @@
 #! decorator function to time other functions
 from time import perf_counter_ns
+from types import FunctionType
 
-def calcTime(func: function) -> tuple[int, any]:
+def calcTime(func: FunctionType) -> tuple[int, any]:
     """Decorator function that returns the time taken by a function call
     in nanoseconds and the original return values of the decorated function"""
     def inner1(*args, **kwargs):
