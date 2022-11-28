@@ -5,6 +5,7 @@ import os
 from osgeo_utils import gdal2tiles
 from tileTools.calcTime import calcTime
 from tileTools.dbConnect import dbConnect
+from tileTools.myConfig import config
 import traceback
 from osgeo.gdal import GDT_Byte, Translate
 from shutil import rmtree
