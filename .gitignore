@@ -1,4 +1,5 @@
 myConfig.py
+.vscode/
 
 # .tif source files
 TIFFs/
