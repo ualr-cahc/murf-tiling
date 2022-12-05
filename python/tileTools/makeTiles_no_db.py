@@ -1,5 +1,4 @@
-"""makeTiles validates/generates output directories, translates files to bytes,
-and generates tile ouputs
+"""Create XYZ tile layers for a list of GeoTIFFs. 
 """
 
 import os
@@ -19,13 +18,20 @@ logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
-def makeTileLayer(translated_file_path: str|Path, layer_output_dir: str|Path, min_zoom: int, max_zoom: int, processes=6, xyz=True):
+def _make_tile_layer(translated_file_path: str|Path, 
+                     layer_output_dir: str|Path, 
+                     min_zoom: int, 
+                     max_zoom: int, 
+                     processes=os.processes, 
+                     xyz=True):
     
     with rasterio.open(translated_file_path) as raster:
         if isinstance(raster.transform, rasterio.Affine):
-            opw = raster.transform[0]
-            c = 40075016.686
-            max_zoom = ceil(log2(c * cos(radians(34.74))/opw) - 8)
+            original_pixel_width = (
+                (raster.bounds.right + raster.bounds.left) / raster.width
+            )
+            earth_diameter = 40075016.686
+            max_zoom = ceil(log2(earth_diameter * cos(radians(34.74)) / original_pixel_width) - 8)
         else:
             logging.info(f"Non-Affine transform type used: {type(raster.transform)}. Defaulting to supplied max_zoom: {max_zoom}.")
     
@@ -36,6 +42,7 @@ def makeTileLayer(translated_file_path: str|Path, layer_output_dir: str|Path, mi
     args += [str(translated_file_path), str(layer_output_dir)]
     
     try:
+
         begin = perf_counter_ns()
         logging.debug(f"tiling: {args}")
         gdal2tiles.main(args)
@@ -44,9 +51,7 @@ def makeTileLayer(translated_file_path: str|Path, layer_output_dir: str|Path, mi
         end = perf_counter_ns()
         duration = end-begin
         logging.info(f"Zoom {min_zoom}-{max_zoom} tile time: {duration/1000000000} seconds")
-        # if duration > 60000000000 and zoom_level > max_zoom_by_pixel_size:
-        #     """layers[dirname] = zoom_level"""
-        #     return
+        
     except Exception:
         # log error
         error = traceback.format_exc()

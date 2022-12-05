@@ -13,10 +13,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-dbKwargs = {
-    'password': "POIUpoiu)(*&0987",
-    'database': 'murf_tiling'
-}
 
 @calcTime
 def translate2bytes(translated_file_path, input_filepath):
