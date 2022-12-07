@@ -1,16 +1,3 @@
-myConfig.py
-.vscode/
-
-# .tif source files
-TIFFs/
-
-#*.pdf
-
-# test folders
-tests/
-
-##########################################################################################
-
 # Python
 # Byte-compiled / optimized / DLL files
 __pycache__/
