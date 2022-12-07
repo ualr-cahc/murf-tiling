@@ -1,0 +1,5 @@
+Requirements: generate raster tiles for around 1000 GeoTIFFs
+Tools: gdal2tiles
+
+I began this project by downloading the osgeo4w suite and processing files with
+the 

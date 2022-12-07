@@ -216,7 +216,12 @@ def makeTiles(input_filepaths: list[str],
         try:
             logging.info(f"Making tile layer for {layer_name}")
             _make_tile_layer(
-                translated_file_path, layer_output_dir, min_zoom, max_zoom
+                translated_file_path,
+                layer_output_dir,
+                min_zoom,
+                max_zoom,
+                xyz=xyz,
+                processes=processes
             )
         # If the user raises a KeyboardInterrupt log it,
         # remove the incomplete layer, and exit.
