@@ -1,5 +1,6 @@
 Requirements: generate raster tiles for around 1000 GeoTIFFs
-Tools: gdal2tiles
+Tools: gdal2tiles  from GDAL (Geospatial Data Abstraction Library) included in the OSGeo4W suite (Open Source Geospatial Foundation for Windows). 
 
-I began this project by downloading the osgeo4w suite and processing files with
-the 
+This project required that around a thousand GeoTIFFs be rendered into raster tiles for use on a web map. I began by processing files with a script called gdal2tiles. However, in order for the script to work properly, each GeoTIFF had to first be translated from its original encoding (usually 16 bit) into an equivalent 8 bit encoding. Luckily GDAL has a tool to perform that operation as well. In order to speed up the process of running these scripts, I incorporated them both - "Translate" and "gdal2tiles" - into my own script, which takes an entire folder of files, extracts the GeoTIFFs, translates them to bytes, and then transforms them into raster tiles. While this saved a considerable amount of time by eliminated the repeated work of manually running both scripts for each file, it also exposed another bottleneck in the process. It is required that the minimum and maximum zoom levels be specified before running gdal2tiles. However, the amount of time that it takes to render a zoom level increases exponentially as you zoom in closer. It is not obvious what zoom level is optimum, and if you specify a maximum zoom level that is too high, you might end up having to wait hours for a single set of tiles to be created. 
+
+ 

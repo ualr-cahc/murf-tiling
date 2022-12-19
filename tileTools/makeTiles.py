@@ -1,3 +1,5 @@
+# pyright: reportMissingTypeStubs=false, reportUnknownVariableType=false,
+# pyright: reportUnknownMemberType=false, reportUnknownArgumentType=false
 """Create XYZ tile layers for a list of GeoTIFFs.
 """
 
@@ -57,10 +59,10 @@ def _find_max_zoom(translated_file_path: str):
                         f"latitude: {latitude}"
                         f"max zoom: {max_zoom}")
         else:
-            logger.info(f"Non-Affine transform type used: "
-                        f"{type(raster.transform)}. "
-                        f"Defaulting to supplied max_zoom: {max_zoom}.")
-
+            logger.error(f"Non-Affine transform type used: "
+                         f"{type(raster.transform)}. ")
+            raise ValueError("Non-Affine transofrm type used. A value for "
+                             "max_zoom must be supplied.")
     return max_zoom
 
 
@@ -68,8 +70,8 @@ def _make_tile_layer(translated_file_path: str,
                      layer_output_dir: str,
                      min_zoom: int = 8,
                      max_zoom: int | None = None,
-                     processes=os.cpu_count(),
-                     xyz=True):
+                     processes: int | None = None,
+                     xyz: bool = True):
     """Create a raster tile layer from a single GeoTIFF file using
     gdal2tile.
 
@@ -85,6 +87,9 @@ def _make_tile_layer(translated_file_path: str,
         xyz (bool, optional): True for XYZ tiles, False for TMS.
         Defaults to True.
     """
+
+    if processes is None:
+        processes = os.cpu_count()
 
     logger.debug("Beginning _make_tile_layer for "
                  f"{Path(translated_file_path).name}")
@@ -139,8 +144,8 @@ def makeTiles(input_filepaths: list[str],
               output_dir: str,
               min_zoom: int = 8,
               max_zoom: int | None = None,
-              xyz=True,
-              processes=os.cpu_count()
+              xyz: bool = True,
+              processes: int | None = None
               ):
     """Make raster tiles from
 
@@ -163,18 +168,18 @@ def makeTiles(input_filepaths: list[str],
         for unexpected errors during tiling.
     """
 
-    # Convert the list of input filepaths to a map of Path objects
-    input_filepaths = map(Path, input_filepaths)
+    if processes is None:
+        processes = os.cpu_count()
     # Convert the output directory to a Path object
-    output_dir = Path(output_dir)
+    output_dir_path = Path(output_dir)
     # Create output directory for translated files
     # and for tile layers.
-    translate_output_dir = output_dir / "translated"
-    tile_output_dir = output_dir / "tiles"
+    translate_output_dir = output_dir_path / "translated"
+    tile_output_dir = output_dir_path / "tiles"
     # Make sure the folders exist.
     _validate_paths(tile_output_dir, translate_output_dir)
 
-    for input_filepath in input_filepaths:
+    for input_filepath in map(Path, input_filepaths):
         logging.debug(f"Input filepath {input_filepath}")
 
         filename = input_filepath.name
@@ -216,8 +221,8 @@ def makeTiles(input_filepaths: list[str],
         try:
             logging.info(f"Making tile layer for {layer_name}")
             _make_tile_layer(
-                translated_file_path,
-                layer_output_dir,
+                str(translated_file_path),
+                str(layer_output_dir),
                 min_zoom,
                 max_zoom,
                 xyz=xyz,
