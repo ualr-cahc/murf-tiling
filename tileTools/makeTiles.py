@@ -6,21 +6,19 @@
 import logging
 import os
 import traceback
-from datetime import datetime
 from math import ceil, cos, log2, radians
 from pathlib import Path
 from shutil import rmtree
 from time import perf_counter_ns
+from typing import Optional
 
 import rasterio
 from osgeo.gdal import GDT_Byte, Translate
 from osgeo_utils import gdal2tiles
 
+from tileTools.database import Database, NewColumn
+
 logger = logging.getLogger(__name__)
-log_file_name = f"tiling_{datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}.log"
-log_file_handler = logging.FileHandler(log_file_name)
-log_file_handler.setLevel(logging.INFO)
-logger.addHandler(log_file_handler)
 
 
 def _find_max_zoom(translated_file_path: str):
@@ -41,11 +39,9 @@ def _find_max_zoom(translated_file_path: str):
     with rasterio.open(translated_file_path) as raster:
         if isinstance(raster.transform, rasterio.Affine):
 
-            original_pixel_width = (
-                (raster.bounds.right + raster.bounds.left) / raster.width
-            )
+            original_pixel_width = abs(raster.transform[0])
             earth_diameter = 40075016.686
-            latitude = 34.74
+            latitude = raster.lnglat()[1]
             max_zoom = ceil(
                 log2(earth_diameter
                      * cos(radians(latitude))
@@ -61,7 +57,7 @@ def _find_max_zoom(translated_file_path: str):
         else:
             logger.error(f"Non-Affine transform type used: "
                          f"{type(raster.transform)}. ")
-            raise ValueError("Non-Affine transofrm type used. A value for "
+            raise ValueError("Non-Affine transform type used. A value for "
                              "max_zoom must be supplied.")
     return max_zoom
 
@@ -71,7 +67,8 @@ def _make_tile_layer(translated_file_path: str,
                      min_zoom: int = 8,
                      max_zoom: int | None = None,
                      processes: int | None = None,
-                     xyz: bool = True):
+                     xyz: bool = True,
+                     database: Optional[Database] = None):
     """Create a raster tile layer from a single GeoTIFF file using
     gdal2tile.
 
@@ -112,7 +109,7 @@ def _make_tile_layer(translated_file_path: str,
     # add input and output paths last
     gdal2tile_args += [str(translated_file_path), str(layer_output_dir)]
 
-    logging.debug(f"Begin tiling. Args: {gdal2tile_args}")
+    logger.debug(f"Begin tiling. Args: {gdal2tile_args}")
 
     begin = perf_counter_ns()
     gdal2tiles.main(gdal2tile_args)
@@ -121,8 +118,21 @@ def _make_tile_layer(translated_file_path: str,
     end = perf_counter_ns()
     duration = end-begin
 
-    logging.info(f"Zoom {min_zoom}-{max_zoom} tile time: "
-                 f"{duration/1000000000} seconds")
+    if database is not None:
+        database.insert(
+            table_name='make_tile_layer',
+            items_to_insert={
+                'layer_name': Path(translated_file_path).stem,
+                'min_zoom': min_zoom,
+                'max_zoom': max_zoom,
+                'tile_time_ns': duration,
+                'processes': processes,
+                'xyz_tiles': 1 if xyz is True else 0,
+            }
+        )
+
+    logger.info(f"Zoom {min_zoom}-{max_zoom} tile time: "
+                f"{duration/1000000000} seconds")
 
 
 def _validate_paths(*paths: Path):
@@ -140,14 +150,32 @@ def _validate_paths(*paths: Path):
                              f"that is actually a file {path}")
 
 
-def makeTiles(input_filepaths: list[str],
-              output_dir: str,
-              min_zoom: int = 8,
-              max_zoom: int | None = None,
-              xyz: bool = True,
-              processes: int | None = None
-              ):
-    """Make raster tiles from
+def _is_color_mapped(raster_location: str) -> bool:
+    """Determine if the raster is color mapped"""
+    raster = rasterio.open(raster_location)
+    for band in range(raster.count):
+        try:
+            band += 1
+            is_color_mapped = isinstance(raster.colormap(band), dict)
+            if is_color_mapped is True:
+                return True
+
+        except ValueError as err:
+            if str(err) == "NULL color table":
+                return False
+            else:
+                raise err
+
+
+def make_tiles(input_filepaths: list[str],
+               output_dir: str,
+               min_zoom: int = 8,
+               max_zoom: int | None = None,
+               xyz: bool = True,
+               processes: int | None = None,
+               database_logging: bool = False
+               ):
+    """Make raster tiles for all GeoTIFFs in a directory.
 
     Args:
         input_filepaths (list[str]): List of GeoTIFF filepaths.
@@ -168,8 +196,27 @@ def makeTiles(input_filepaths: list[str],
         for unexpected errors during tiling.
     """
 
-    if processes is None:
-        processes = os.cpu_count()
+    if database_logging is True:
+        logger.debug("Initializing database 'tiling.db'")
+        database = Database("tiling.db")
+
+        make_tile_layer_columns = [
+            NewColumn('layer_name', 'text', 'NOT NULL'),
+            NewColumn('min_zoom', 'integer', 'NOT NULL'),
+            NewColumn('max_zoom', 'integer', 'NOT NULL'),
+            NewColumn('tile_time_ns', 'integer', 'NOT NULL'),
+            NewColumn('processes', 'integer', 'NOT NULL'),
+            NewColumn('xyz_tiles', 'integer', 'DEFAULT 0')
+        ]
+
+        database.add_table('make_tile_layer',
+                           make_tile_layer_columns)
+    else:
+        database = None
+
+    logger.debug("Beginning make_tiles. "
+                 f"args: {locals()}")
+
     # Convert the output directory to a Path object
     output_dir_path = Path(output_dir)
     # Create output directory for translated files
@@ -179,36 +226,44 @@ def makeTiles(input_filepaths: list[str],
     # Make sure the folders exist.
     _validate_paths(tile_output_dir, translate_output_dir)
 
+    logger.debug("Looping through input_filepaths.")
     for input_filepath in map(Path, input_filepaths):
-        logging.debug(f"Input filepath {input_filepath}")
+        logger.debug(f"Processing input filepath {input_filepath}")
 
         filename = input_filepath.name
         layer_name = input_filepath.stem
         translated_file_path = translate_output_dir / filename
         layer_output_dir = tile_output_dir / layer_name
 
-        logging.debug(f"input_filepath: {input_filepath}, "
-                      f"filename: {filename}, "
-                      f"layer_name: {layer_name}, "
-                      f"translated_file_path: {translated_file_path}, "
-                      f"layer_output_dir: {layer_output_dir}")
+        logger.debug(f"input_filepath: {input_filepath}, "
+                     f"filename: {filename}, "
+                     f"layer_name: {layer_name}, "
+                     f"translated_file_path: {translated_file_path}, "
+                     f"layer_output_dir: {layer_output_dir}")
         # only try to translate a file if the
         # translated file doesn't already exist
         if translated_file_path not in translate_output_dir.iterdir():
             # Try to translate, and log errors without exiting.
             # Some layers won't translate due to problems with the file.
+            if _is_color_mapped(input_filepath):
+                rgbExpand = "rgb"
+            else:
+                rgbExpand = None
+
             try:
-                logging.debug(f"Translated file path: {translated_file_path}")
-                logging.debug(f"Input file path: {input_filepath}")
-                Translate(translated_file_path,
-                          input_filepath,
-                          outputType=GDT_Byte)
+                logger.debug(f"Translating {translated_file_path} to bytes.")
+
+                Translate(str(translated_file_path),
+                          str(input_filepath),
+                          outputType=GDT_Byte,
+                          rgbExpand=rgbExpand)
+
             except Exception:
                 # If an error occurs in translation, log it,
                 # stop trying to process this input file,
                 # and move on to the next
                 error = traceback.format_exc()
-                logging.debug(error)
+                logger.debug(error)
 
                 break
 
@@ -219,23 +274,26 @@ def makeTiles(input_filepaths: list[str],
         # Try to make the current tile layer,
         # but remove it if an error is raised before it completes.
         try:
-            logging.info(f"Making tile layer for {layer_name}")
+            logger.info(f"Making tile layer for {layer_name}")
             _make_tile_layer(
                 str(translated_file_path),
                 str(layer_output_dir),
                 min_zoom,
                 max_zoom,
                 xyz=xyz,
-                processes=processes
+                processes=processes,
+                database=database
             )
+
         # If the user raises a KeyboardInterrupt log it,
         # remove the incomplete layer, and exit.
         except KeyboardInterrupt:
             rmtree(layer_output_dir)
             raise KeyboardInterrupt
-        # If an unexpected error occurrs, log it, remove the incomplete layer,
+        # If an unexpected error occurs, log it, remove the incomplete layer,
         # and exit.
-        except Exception:
-            error = traceback.format_exc()
-            logging.debug(error)
+        except Exception as err:
+            error = traceback.format_exc().replace("\n", ";")
+            logger.error(error)
             rmtree(layer_output_dir)
+            raise err
