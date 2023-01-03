@@ -2,6 +2,7 @@
 tiling.db
 logs/
 .vscode/
+tests/output/
 
 # Python
 # Byte-compiled / optimized / DLL files

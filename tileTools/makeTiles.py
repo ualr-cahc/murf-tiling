@@ -128,6 +128,7 @@ def _make_tile_layer(translated_file_path: str,
                 'tile_time_ns': duration,
                 'processes': processes,
                 'xyz_tiles': 1 if xyz is True else 0,
+                'translated_file_size': os.stat(translated_file_path).st_size
             }
         )
 
@@ -146,7 +147,7 @@ def _validate_paths(*paths: Path):
         if not path.exists():
             os.makedirs(path)
         elif path.is_file():
-            raise ValueError("trying to write output to directory "
+            raise ValueError("Trying to write output to directory "
                              f"that is actually a file {path}")
 
 
@@ -206,7 +207,8 @@ def make_tiles(input_filepaths: list[str],
             NewColumn('max_zoom', 'integer', 'NOT NULL'),
             NewColumn('tile_time_ns', 'integer', 'NOT NULL'),
             NewColumn('processes', 'integer', 'NOT NULL'),
-            NewColumn('xyz_tiles', 'integer', 'DEFAULT 0')
+            NewColumn('xyz_tiles', 'integer', 'DEFAULT 0'),
+            NewColumn('translated_file_size', 'integer', 'NOT NULL')
         ]
 
         database.add_table('make_tile_layer',
