@@ -23,7 +23,7 @@ class Table:
         self.database_connection = database_connection
         self.create_table(columns)
 
-    def insert(self, items_to_insert: dict[str, str]):
+    def insert(self, items_to_insert: dict[str | int, str | int | None]):
         """insert items into table"""
 
         keys = ", ".join(f"{key}" for key in items_to_insert.keys())
@@ -34,7 +34,8 @@ class Table:
         logger.debug(f"Database insert. {locals()}")
         self.execute_statement(statement, params)
 
-    def update(self, key: dict, items_to_update: dict[str, str]):
+    def update(self, key: dict[str, str | int],
+               items_to_update: dict[str, str | int]):
 
         keys = " AND ".join(f"{key}=?" for key in key.keys())
         sets = ", ".join(f"{key}=?" for key in items_to_update.keys())
@@ -45,12 +46,14 @@ class Table:
 
     def delete(self, key: dict[str, str]):
 
-        keys = " AND ".join(f"{key}={value}" for key, value in key.items())
+        keys = " AND ".join(f"{key}=?" for key in key.keys())
+        params = tuple(key.values())
         statement = f"DELETE FROM {self.name} WHERE {keys};"
         logger.debug(f"Database delete. {locals()}")
-        self.execute_statement(statement)
+        self.execute_statement(statement, params)
 
-    def execute_statement(self, statement: str, params: tuple[str, ...]):
+    def execute_statement(self, statement: str,
+                          params: tuple[str | int | None, ...]):
         """Handle cursor and commit changes"""
 
         logger.debug("Executing statement. "
@@ -93,23 +96,24 @@ class Database:
 
         self.connection.close()
 
-    def insert(self, table_name: str, items_to_insert: dict[str, str]):
-        self._verify_table(table_name)
+    def insert(self, table_name: str,
+               items_to_insert: dict[str | int, str | int | None]):
+        # self._verify_table(table_name)
         self.tables[table_name].insert(items_to_insert)
 
     def update(self, table_name: str,
-               key: dict[str, str],
-               items_to_update: dict[str, str]):
+               key: dict[str, str | int],
+               items_to_update: dict[str, str | int]):
 
-        self._verify_table(table_name)
+        # self._verify_table(table_name)
         self.tables[table_name].update(items_to_update, key)
 
     def delete(self, table_name: str, key: dict[str, str]):
 
-        self._verify_table(table_name)
+        # self._verify_table(table_name)
         self.tables[table_name].delete(key)
 
-    def _verify_table(self, table_name: str):
+    # # def _verify_table(self, table_name: str):
 
-        if table_name not in self.tables:
-            self.add_table(table_name)
+    #     if table_name not in self.tables:
+    #         self.add_table(table_name)

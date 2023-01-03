@@ -150,14 +150,14 @@ def _validate_paths(*paths: Path):
                              f"that is actually a file {path}")
 
 
-def _is_color_mapped(raster_location: str) -> bool:
+def _is_color_mapped(raster_location: str) -> bool:  # type: ignore
     """Determine if the raster is color mapped"""
+
     raster = rasterio.open(raster_location)
-    for band in range(raster.count):
+    for band in range(raster.count):  # type: ignore
         try:
             band += 1
-            is_color_mapped = isinstance(raster.colormap(band), dict)
-            if is_color_mapped is True:
+            if isinstance(raster.colormap(band), dict):  # type: ignore
                 return True
 
         except ValueError as err:
@@ -245,7 +245,7 @@ def make_tiles(input_filepaths: list[str],
         if translated_file_path not in translate_output_dir.iterdir():
             # Try to translate, and log errors without exiting.
             # Some layers won't translate due to problems with the file.
-            if _is_color_mapped(input_filepath):
+            if _is_color_mapped(str(input_filepath)):
                 rgbExpand = "rgb"
             else:
                 rgbExpand = None

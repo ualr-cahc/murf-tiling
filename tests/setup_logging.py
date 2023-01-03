@@ -1,6 +1,7 @@
 #! python3.11
 
 import logging
+from pathlib import Path
 
 
 def root_logger() -> logging.Logger:
@@ -13,9 +14,9 @@ def root_logger() -> logging.Logger:
         '%(funcName)s - '
         '%(message)s'
     )
+    log_path = Path("./logs/test_tiling.log")
     log_file_handler = logging.FileHandler(
-        "./logs/"
-        "test_tiling.log",
+        log_path,
         mode='a'
     )
     log_file_handler.setLevel(logging.DEBUG)
