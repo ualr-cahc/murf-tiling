@@ -31,7 +31,8 @@ git clone https://github.com/ualr-cahc/murf-tiling
     python -m pip install PATH_TO_RASTERIO_WHEEL
     ```
 
-1. install requirements.txt:
-    ```
-    python -m pip install -r requirements.txt
-    ```
+## run the tool
+
+```python
+
+```

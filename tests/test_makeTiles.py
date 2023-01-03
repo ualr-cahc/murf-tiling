@@ -10,8 +10,8 @@ from tileTools import makeTiles
 
 TESTS = Path("./tests").resolve()
 OUTPUT = TESTS / "output"
-# TIFFS = TESTS / "TIFFs"
-TIFFS = Path("./logs/TIFFs")
+TIFFS = TESTS / "TIFFs"
+# TIFFS = Path("./logs/TIFFs")
 
 
 root_logger = root_logger()

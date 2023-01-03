@@ -16,12 +16,13 @@ class Table:
 
     def __init__(self, database_connection: sqlite3.Connection,
                  table_name: str,
-                 columns: list[NewColumn]):
+                 columns: list[NewColumn],
+                 primary_key: Optional[tuple[str, ...]] = None):
 
         logger.debug(f"Initializing table: {table_name}")
         self.name = table_name
         self.database_connection = database_connection
-        self.create_table(columns)
+        self.create_table(columns, primary_key)
 
     def insert(self, items_to_insert: dict[str | int, str | int | None]):
         """insert items into table"""
@@ -62,14 +63,19 @@ class Table:
         with self.database_connection as connection:
             connection.execute(statement, params)
 
-    def create_table(self, columns: list[NewColumn]):
+    def create_table(self, columns: list[NewColumn],
+                     primary_key: Optional[tuple[str, ...]] = None):
 
         columns_text = ', '.join(
             f"{column.name} {column.type} {column.options or ''}"
             for column in columns
         )
-        create_table_statement = ("CREATE TABLE IF NOT EXISTS "
-                                  f"{self.name} ({columns_text});")
+        primary_key_text = f", PRIMARY KEY {primary_key}"
+        create_table_statement = (
+            "CREATE TABLE IF NOT EXISTS "
+            f"{self.name} ({columns_text}"
+            f"{primary_key_text if primary_key else ''});"
+        )
 
         self.execute_statement(
             create_table_statement, tuple()
@@ -84,13 +90,15 @@ class Database:
         self.database_name = database_name
         self.tables: dict[str, Table] = {}
 
-    def add_table(self, table_name: str, columns: list[NewColumn]):
+    def add_table(self, table_name: str, columns: list[NewColumn],
+                  primary_key: Optional[tuple[str, ...]] = None):
 
         logger.debug(f"Adding table '{table_name}' to database "
                      f"'{self.database_name}'.")
         self.tables[table_name] = Table(self.connection,
                                         table_name,
-                                        columns)
+                                        columns,
+                                        primary_key)
 
     def close(self):
 

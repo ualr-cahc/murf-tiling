@@ -64,9 +64,10 @@ def _find_max_zoom(translated_file_path: str):
 
 def _make_tile_layer(translated_file_path: str,
                      layer_output_dir: str,
+                     batch: Optional[int],
                      min_zoom: int = 8,
-                     max_zoom: int | None = None,
-                     processes: int | None = None,
+                     max_zoom: Optional[int] = None,
+                     processes: Optional[int] = None,
                      xyz: bool = True,
                      database: Optional[Database] = None):
     """Create a raster tile layer from a single GeoTIFF file using
@@ -125,6 +126,7 @@ def _make_tile_layer(translated_file_path: str,
                 'layer_name': Path(translated_file_path).stem,
                 'min_zoom': min_zoom,
                 'max_zoom': max_zoom,
+                'batch': batch,
                 'tile_time_ns': duration,
                 'processes': processes,
                 'xyz_tiles': 1 if xyz is True else 0,
@@ -202,19 +204,36 @@ def make_tiles(input_filepaths: list[str],
         database = Database("tiling.db")
 
         make_tile_layer_columns = [
+            NewColumn('batch', 'integer', 'NOT NULL'),
             NewColumn('layer_name', 'text', 'NOT NULL'),
             NewColumn('min_zoom', 'integer', 'NOT NULL'),
             NewColumn('max_zoom', 'integer', 'NOT NULL'),
             NewColumn('tile_time_ns', 'integer', 'NOT NULL'),
             NewColumn('processes', 'integer', 'NOT NULL'),
             NewColumn('xyz_tiles', 'integer', 'DEFAULT 0'),
-            NewColumn('translated_file_size', 'integer', 'NOT NULL')
+            NewColumn('translated_file_size', 'integer', 'NOT NULL'),
+            NewColumn('datetime', 'text', 'DEFAULT CURRENT_TIMESTAMP')
         ]
 
         database.add_table('make_tile_layer',
-                           make_tile_layer_columns)
+                           make_tile_layer_columns,
+                           primary_key=('batch', 'layer_name'))
+
+        cursor = database.connection.execute(
+            "select max(batch) from make_tile_layer;", tuple()
+        )
+
+        batch = cursor.fetchall()[0][0]
+        cursor.close()
+
+        if batch is None:
+            batch = 0
+        else:
+            batch += 1
+
     else:
         database = None
+        batch = None
 
     logger.debug("Beginning make_tiles. "
                  f"args: {locals()}")
@@ -280,6 +299,7 @@ def make_tiles(input_filepaths: list[str],
             _make_tile_layer(
                 str(translated_file_path),
                 str(layer_output_dir),
+                batch,
                 min_zoom,
                 max_zoom,
                 xyz=xyz,

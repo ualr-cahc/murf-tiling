@@ -38,3 +38,6 @@ Since this project relies on the Open Street Map Slippy Map Tile Standard (aka X
     $z = log_{2}(\frac{C \times \cos(l)}{w}) - 8$
 
 
+* ran basic scripts
+* encapsulated scripts in bulk script
+* 
