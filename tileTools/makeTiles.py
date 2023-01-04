@@ -138,7 +138,7 @@ def _make_tile_layer(translated_file_path: str,
                 f"{duration/1000000000} seconds")
 
 
-def _validate_paths(*paths: Path):
+def _validate_output_dirs(*paths: Path):
     """For each path, create it if it doesn't already exist.
 
     Raises:
@@ -235,7 +235,7 @@ def make_tiles_from_list(input_filepaths: list[str],
     translate_output_dir = output_dir_path / "translated"
     tile_output_dir = output_dir_path / "tiles"
     # Make sure the folders exist.
-    _validate_paths(tile_output_dir, translate_output_dir)
+    _validate_output_dirs(tile_output_dir, translate_output_dir)
 
     logger.debug("Looping through input_filepaths.")
     for input_filepath in map(Path, input_filepaths):
