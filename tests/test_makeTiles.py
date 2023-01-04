@@ -30,7 +30,7 @@ class test_makeTiles(unittest.TestCase):
 
     def test_makeTiles(self):
         makeTiles.make_tiles(
-            input_filepaths=list(map(str, TIFFS.iterdir())),
+            input_dir=str(TIFFS),
             output_dir=str(OUTPUT),
-            database_logging=True
+            database_name='tiling.db'
         )

@@ -170,18 +170,18 @@ def _is_color_mapped(raster_location: str) -> bool:  # type: ignore
                 raise err
 
 
-def make_tiles(input_filepaths: list[str],
+def make_tiles(input_dir: str,
                output_dir: str,
                min_zoom: int = 8,
                max_zoom: int | None = None,
                xyz: bool = True,
                processes: int | None = None,
-               database_logging: bool = False
+               database_name: Optional[str] = None
                ):
     """Make raster tiles for all GeoTIFFs in a directory.
 
     Args:
-        input_filepaths (list[str]): List of GeoTIFF filepaths.
+        input_dir (str): location of source GeoTIFFs.
         output_dir (str): location to drop subfolders "translated" and
         "tiles" containing byte translated versions of the GeoTIFFs and the
         resulting tile sets, respectively.
@@ -190,18 +190,22 @@ def make_tiles(input_filepaths: list[str],
         set. If not supplied, max_zoom is calculated via _find_max_zoom()
         xyz (bool, optional): True for XYZ tiles, False for TMS.
         Defaults to True.
-        processes (_type_, optional): The number of multithreading processes
-        to use. Defaults to os.cpu_count() (aka max for machine).
-
+        processes (int | None, optional): The number of multithreading
+        processes to use. Defaults to os.cpu_count() (aka max for machine).
+        database_name (str | None, optional): Provide a name and the tool will
+        write an sqlite3 database file with stats about the tiling process.
     Raises:
         KeyboardInterrupt: If KeyboardInterrupt is raised while tiling a layer,
         the incomplete layer is discarded before the program stops. Same goes
         for unexpected errors during tiling.
     """
 
-    if database_logging is True:
-        logger.debug("Initializing database 'tiling.db'")
-        database = Database("tiling.db")
+    logger.debug("Beginning make_tiles. "
+                 f"args: {locals()}")
+
+    if database_name is not None:
+        logger.debug(f"Initializing database {database_name}")
+        database = Database(database_name)
 
         make_tile_layer_columns = [
             NewColumn('batch', 'integer', 'NOT NULL'),
@@ -235,9 +239,6 @@ def make_tiles(input_filepaths: list[str],
         database = None
         batch = None
 
-    logger.debug("Beginning make_tiles. "
-                 f"args: {locals()}")
-
     # Convert the output directory to a Path object
     output_dir_path = Path(output_dir)
     # Create output directory for translated files
@@ -248,9 +249,11 @@ def make_tiles(input_filepaths: list[str],
     _validate_paths(tile_output_dir, translate_output_dir)
 
     logger.debug("Looping through input_filepaths.")
-    for input_filepath in map(Path, input_filepaths):
+    for input_filepath in Path(input_dir).iterdir():
         logger.debug(f"Processing input filepath {input_filepath}")
-
+        if input_filepath.suffix != ".tif":
+            logger.debug(f"Skipping non-tif file: {input_filepath}.")
+            continue
         filename = input_filepath.name
         layer_name = input_filepath.stem
         translated_file_path = translate_output_dir / filename
