@@ -170,71 +170,60 @@ def _is_color_mapped(raster_location: str) -> bool:  # type: ignore
                 raise err
 
 
-def make_tiles(input_dir: str,
-               output_dir: str,
-               min_zoom: int = 8,
-               max_zoom: int | None = None,
-               xyz: bool = True,
-               processes: int | None = None,
-               database_name: Optional[str] = None
-               ):
-    """Make raster tiles for all GeoTIFFs in a directory.
+def _initialize_database(database_name: str):
 
-    Args:
-        input_dir (str): location of source GeoTIFFs.
-        output_dir (str): location to drop subfolders "translated" and
-        "tiles" containing byte translated versions of the GeoTIFFs and the
-        resulting tile sets, respectively.
-        min_zoom (int): Minimum zoom level for rendered tile set. Default is 8.
-        max_zoom (int | None, optional): Maximum zoom level for rendered tile
-        set. If not supplied, max_zoom is calculated via _find_max_zoom()
-        xyz (bool, optional): True for XYZ tiles, False for TMS.
-        Defaults to True.
-        processes (int | None, optional): The number of multithreading
-        processes to use. Defaults to os.cpu_count() (aka max for machine).
-        database_name (str | None, optional): Provide a name and the tool will
-        write an sqlite3 database file with stats about the tiling process.
-    Raises:
-        KeyboardInterrupt: If KeyboardInterrupt is raised while tiling a layer,
-        the incomplete layer is discarded before the program stops. Same goes
-        for unexpected errors during tiling.
-    """
+    logger.debug(f"Initializing database {database_name}")
+    database = Database(database_name)
 
-    logger.debug("Beginning make_tiles. "
-                 f"args: {locals()}")
+    make_tile_layer_columns = [
+        NewColumn('batch', 'integer', 'NOT NULL'),
+        NewColumn('layer_name', 'text', 'NOT NULL'),
+        NewColumn('min_zoom', 'integer', 'NOT NULL'),
+        NewColumn('max_zoom', 'integer', 'NOT NULL'),
+        NewColumn('tile_time_ns', 'integer', 'NOT NULL'),
+        NewColumn('processes', 'integer', 'NOT NULL'),
+        NewColumn('xyz_tiles', 'integer', 'DEFAULT 0'),
+        NewColumn('translated_file_size', 'integer', 'NOT NULL'),
+        NewColumn('datetime', 'text', 'DEFAULT CURRENT_TIMESTAMP')
+    ]
 
+    database.add_table('make_tile_layer',
+                       make_tile_layer_columns,
+                       primary_key=('batch', 'layer_name'))
+
+    return database
+
+
+def _get_batch_number(database: Database):
+
+    cursor = database.connection.execute(
+        "select max(batch) from make_tile_layer;", tuple()
+    )
+    batch = cursor.fetchall()[0][0]
+    cursor.close()
+    if batch is None:
+        batch = 0
+    else:
+        batch += 1
+
+    return batch
+
+
+def make_tiles_from_list(input_filepaths: list[str],
+                         output_dir: str,
+                         min_zoom: int = 8,
+                         max_zoom: int | None = None,
+                         xyz: bool = True,
+                         processes: int | None = None,
+                         database_name: Optional[str] = None
+                         ):
+
+    args = {k: v for k, v in locals().items() if k != "input_filepaths"}
+
+    logger.debug(f"Beginning make_tiles_from_list. args: {args}")
     if database_name is not None:
-        logger.debug(f"Initializing database {database_name}")
-        database = Database(database_name)
-
-        make_tile_layer_columns = [
-            NewColumn('batch', 'integer', 'NOT NULL'),
-            NewColumn('layer_name', 'text', 'NOT NULL'),
-            NewColumn('min_zoom', 'integer', 'NOT NULL'),
-            NewColumn('max_zoom', 'integer', 'NOT NULL'),
-            NewColumn('tile_time_ns', 'integer', 'NOT NULL'),
-            NewColumn('processes', 'integer', 'NOT NULL'),
-            NewColumn('xyz_tiles', 'integer', 'DEFAULT 0'),
-            NewColumn('translated_file_size', 'integer', 'NOT NULL'),
-            NewColumn('datetime', 'text', 'DEFAULT CURRENT_TIMESTAMP')
-        ]
-
-        database.add_table('make_tile_layer',
-                           make_tile_layer_columns,
-                           primary_key=('batch', 'layer_name'))
-
-        cursor = database.connection.execute(
-            "select max(batch) from make_tile_layer;", tuple()
-        )
-
-        batch = cursor.fetchall()[0][0]
-        cursor.close()
-
-        if batch is None:
-            batch = 0
-        else:
-            batch += 1
-
+        database = _initialize_database(database_name)
+        batch = _get_batch_number(database)
     else:
         database = None
         batch = None
@@ -249,7 +238,7 @@ def make_tiles(input_dir: str,
     _validate_paths(tile_output_dir, translate_output_dir)
 
     logger.debug("Looping through input_filepaths.")
-    for input_filepath in Path(input_dir).iterdir():
+    for input_filepath in map(Path, input_filepaths):
         logger.debug(f"Processing input filepath {input_filepath}")
         if input_filepath.suffix != ".tif":
             logger.debug(f"Skipping non-tif file: {input_filepath}.")
@@ -322,3 +311,46 @@ def make_tiles(input_dir: str,
             logger.error(error)
             rmtree(layer_output_dir)
             raise err
+
+
+def make_tiles(input_dir: str,
+               output_dir: str,
+               min_zoom: int = 8,
+               max_zoom: int | None = None,
+               xyz: bool = True,
+               processes: int | None = None,
+               database_name: Optional[str] = None
+               ):
+    """Make raster tiles for all GeoTIFFs in a directory.
+
+    Args:
+        input_dir (str): location of source GeoTIFFs.
+        output_dir (str): location to drop subfolders "translated" and
+        "tiles" containing byte translated versions of the GeoTIFFs and the
+        resulting tile sets, respectively.
+        min_zoom (int): Minimum zoom level for rendered tile set. Default is 8.
+        max_zoom (int | None, optional): Maximum zoom level for rendered tile
+        set. If not supplied, max_zoom is calculated via _find_max_zoom()
+        xyz (bool, optional): True for XYZ tiles, False for TMS.
+        Defaults to True.
+        processes (int | None, optional): The number of multithreading
+        processes to use. Defaults to os.cpu_count() (aka max for machine).
+        database_name (str | None, optional): Provide a name and the tool will
+        write an sqlite3 database file with stats about the tiling process.
+    Raises:
+        KeyboardInterrupt: If KeyboardInterrupt is raised while tiling a layer,
+        the incomplete layer is discarded before the program stops. Same goes
+        for unexpected errors during tiling.
+    """
+    logger.debug("Beginning make_tiles. "
+                 f"args: {locals()}")
+
+    input_filepaths = list(map(str, Path(input_dir).iterdir()))
+
+    make_tiles_from_list(input_filepaths=input_filepaths,
+                         output_dir=output_dir,
+                         min_zoom=min_zoom,
+                         max_zoom=max_zoom,
+                         xyz=xyz,
+                         processes=processes,
+                         database_name=database_name)
