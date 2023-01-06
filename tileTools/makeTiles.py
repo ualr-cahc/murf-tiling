@@ -305,12 +305,11 @@ def make_tiles_from_list(input_filepaths: list[str],
             rmtree(layer_output_dir)
             raise KeyboardInterrupt
         # If an unexpected error occurs, log it, remove the incomplete layer,
-        # and exit.
-        except Exception as err:
+
+        except Exception:
             error = traceback.format_exc().replace("\n", ";")
             logger.error(error)
             rmtree(layer_output_dir)
-            raise err
 
 
 def make_tiles(input_dir: str,

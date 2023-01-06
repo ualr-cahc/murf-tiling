@@ -20,7 +20,7 @@ python >= 3.10.5
     env\Scripts\activate
     ```
 
-1. install gdal and rasterio wheels:
+1. install gdal and rasterio [wheels](https://www.lfd.uci.edu/~gohlke/pythonlibs):
     * via requirements.txt
     ```
     pip install -r requirements.txt
