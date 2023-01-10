@@ -14,9 +14,12 @@ def root_logger() -> logging.Logger:
         '%(funcName)s - '
         '%(message)s'
     )
-    log_path = Path("./logs/test_tiling.log")
+    log_folder = Path("./logs")
+    log_file = log_folder/"test_tiling.log"
+    if not log_folder.exists():
+        log_folder.mkdir()
     log_file_handler = logging.FileHandler(
-        log_path,
+        log_file,
         mode='a'
     )
     log_file_handler.setLevel(logging.DEBUG)

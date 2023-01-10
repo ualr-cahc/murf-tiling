@@ -63,20 +63,19 @@ def _find_max_zoom(translated_file_path: str):
 
 
 def _make_tile_layer(translated_file_path: str,
-                     layer_output_dir: str,
+                     layer_output_folder: str,
                      batch: Optional[int],
                      min_zoom: int = 8,
                      max_zoom: Optional[int] = None,
                      processes: Optional[int] = None,
-                     xyz: bool = True,
-                     database: Optional[Database] = None):
+                     xyz: bool = True) -> dict[str, int | str]:
     """Create a raster tile layer from a single GeoTIFF file using
     gdal2tile.
 
     Args:
         translated_file_path (str): Path to a GeoTIFF that has been converted
         to bytes using osgeo.gdal.Translate
-        layer_output_dir (str): location for gdal2tiles to drop files
+        layer_output_folder (str): location for gdal2tiles to drop files
         min_zoom (int): Minimum zoom level. Defaults to 8.
         max_zoom (int | None, optional): If not supplied, default zoom is
         determined by _find_max_zoom function. Defaults to None.
@@ -108,7 +107,7 @@ def _make_tile_layer(translated_file_path: str,
     if xyz:
         gdal2tile_args.append("--xyz")
     # add input and output paths last
-    gdal2tile_args += [str(translated_file_path), str(layer_output_dir)]
+    gdal2tile_args += [str(translated_file_path), str(layer_output_folder)]
 
     logger.debug(f"Begin tiling. Args: {gdal2tile_args}")
 
@@ -119,10 +118,10 @@ def _make_tile_layer(translated_file_path: str,
     end = perf_counter_ns()
     duration = end-begin
 
-    if database is not None:
-        database.insert(
-            table_name='make_tile_layer',
-            items_to_insert={
+    logger.info(f"Zoom {min_zoom}-{max_zoom} tile time: "
+                f"{duration/1000000000} seconds")
+
+    database_data = {
                 'layer_name': Path(translated_file_path).stem,
                 'min_zoom': min_zoom,
                 'max_zoom': max_zoom,
@@ -132,13 +131,11 @@ def _make_tile_layer(translated_file_path: str,
                 'xyz_tiles': 1 if xyz is True else 0,
                 'translated_file_size': os.stat(translated_file_path).st_size
             }
-        )
 
-    logger.info(f"Zoom {min_zoom}-{max_zoom} tile time: "
-                f"{duration/1000000000} seconds")
+    return database_data
 
 
-def _validate_output_dirs(*paths: Path):
+def _validate_output_folders(*paths: Path):
     """For each path, create it if it doesn't already exist.
 
     Raises:
@@ -184,7 +181,9 @@ def _initialize_database(database_name: str):
         NewColumn('processes', 'integer', 'NOT NULL'),
         NewColumn('xyz_tiles', 'integer', 'DEFAULT 0'),
         NewColumn('translated_file_size', 'integer', 'NOT NULL'),
-        NewColumn('datetime', 'text', 'DEFAULT CURRENT_TIMESTAMP')
+        NewColumn('original_file_size', 'integer', 'NOT NULL'),
+        NewColumn('datetime', 'text', 'DEFAULT CURRENT_TIMESTAMP'),
+        NewColumn('rgbExpand', 'integer', 'DEFAULT 0 NOT NULL')
     ]
 
     database.add_table('make_tile_layer',
@@ -210,7 +209,7 @@ def _get_batch_number(database: Database):
 
 
 def make_tiles_from_list(input_filepaths: list[str],
-                         output_dir: str,
+                         output_folder: str,
                          min_zoom: int = 8,
                          max_zoom: int | None = None,
                          xyz: bool = True,
@@ -229,33 +228,34 @@ def make_tiles_from_list(input_filepaths: list[str],
         batch = None
 
     # Convert the output directory to a Path object
-    output_dir_path = Path(output_dir)
+    output_folder_path = Path(output_folder)
     # Create output directory for translated files
     # and for tile layers.
-    translate_output_dir = output_dir_path / "translated"
-    tile_output_dir = output_dir_path / "tiles"
+    translate_output_folder = output_folder_path / "translated"
+    tile_output_folder = output_folder_path / "tiles"
     # Make sure the folders exist.
-    _validate_output_dirs(tile_output_dir, translate_output_dir)
+    _validate_output_folders(tile_output_folder, translate_output_folder)
 
     logger.debug("Looping through input_filepaths.")
     for input_filepath in map(Path, input_filepaths):
+        
         logger.debug(f"Processing input filepath {input_filepath}")
         if input_filepath.suffix != ".tif":
             logger.debug(f"Skipping non-tif file: {input_filepath}.")
             continue
         filename = input_filepath.name
         layer_name = input_filepath.stem
-        translated_file_path = translate_output_dir / filename
-        layer_output_dir = tile_output_dir / layer_name
+        translated_file_path = translate_output_folder / filename
+        layer_output_folder = tile_output_folder / layer_name
 
         logger.debug(f"input_filepath: {input_filepath}, "
                      f"filename: {filename}, "
                      f"layer_name: {layer_name}, "
                      f"translated_file_path: {translated_file_path}, "
-                     f"layer_output_dir: {layer_output_dir}")
+                     f"layer_output_folder: {layer_output_folder}")
         # only try to translate a file if the
         # translated file doesn't already exist
-        if translated_file_path not in translate_output_dir.iterdir():
+        if translated_file_path not in translate_output_folder.iterdir():
             # Try to translate, and log errors without exiting.
             # Some layers won't translate due to problems with the file.
             if _is_color_mapped(str(input_filepath)):
@@ -281,39 +281,49 @@ def make_tiles_from_list(input_filepaths: list[str],
                 break
 
         # ensure layer output directory exists
-        if not layer_output_dir.is_dir():
-            os.makedirs(layer_output_dir)
+        if not layer_output_folder.is_dir():
+            os.makedirs(layer_output_folder)
 
         # Try to make the current tile layer,
         # but remove it if an error is raised before it completes.
         try:
             logger.info(f"Making tile layer for {layer_name}")
-            _make_tile_layer(
+
+            database_data: dict[str, int | str] = _make_tile_layer(
                 str(translated_file_path),
-                str(layer_output_dir),
+                str(layer_output_folder),
                 batch,
                 min_zoom,
                 max_zoom,
                 xyz=xyz,
-                processes=processes,
-                database=database
+                processes=processes
             )
+
+            if database is not None:
+                database_data.update({
+                    'original_file_size': input_filepath.stat().st_size,
+                    'rgbExpand': True if rgbExpand is not None else False
+                })
+                database.insert(
+                    table_name='make_tile_layer',
+                    items_to_insert=database_data
+                )
 
         # If the user raises a KeyboardInterrupt log it,
         # remove the incomplete layer, and exit.
         except KeyboardInterrupt:
-            rmtree(layer_output_dir)
+            rmtree(layer_output_folder)
             raise KeyboardInterrupt
         # If an unexpected error occurs, log it, remove the incomplete layer,
 
         except Exception:
             error = traceback.format_exc().replace("\n", ";")
             logger.error(error)
-            rmtree(layer_output_dir)
+            rmtree(layer_output_folder)
 
 
-def make_tiles(input_dir: str,
-               output_dir: str,
+def make_tiles(input_folder: str,
+               output_folder: str,
                min_zoom: int = 8,
                max_zoom: int | None = None,
                xyz: bool = True,
@@ -323,8 +333,8 @@ def make_tiles(input_dir: str,
     """Make raster tiles for all GeoTIFFs in a directory.
 
     Args:
-        input_dir (str): location of source GeoTIFFs.
-        output_dir (str): location to drop subfolders "translated" and
+        input_folder (str): location of source GeoTIFFs.
+        output_folder (str): location to drop subfolders "translated" and
         "tiles" containing byte translated versions of the GeoTIFFs and the
         resulting tile sets, respectively.
         min_zoom (int): Minimum zoom level for rendered tile set. Default is 8.
@@ -344,10 +354,10 @@ def make_tiles(input_dir: str,
     logger.debug("Beginning make_tiles. "
                  f"args: {locals()}")
 
-    input_filepaths = list(map(str, Path(input_dir).iterdir()))
+    input_filepaths = list(map(str, Path(input_folder).iterdir()))
 
     make_tiles_from_list(input_filepaths=input_filepaths,
-                         output_dir=output_dir,
+                         output_folder=output_folder,
                          min_zoom=min_zoom,
                          max_zoom=max_zoom,
                          xyz=xyz,
