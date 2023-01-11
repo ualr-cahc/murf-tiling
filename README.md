@@ -1,6 +1,6 @@
 # GeoTIFF to XYZ raster tiles
 
-python 3.10
+python >= 3.10.5
 
 ## setup
 ```
@@ -8,8 +8,7 @@ git clone https://github.com/ualr-cahc/murf-tiling
 cd murf-tiling
 python -m venv env
 env\Scripts\activate
-pip install .\required_wheels\GDAL-3.4.3-cp310-cp310-win_amd64.whl
-pip install .\required_wheels\rasterio-1.2.10-cp310-cp310-win_amd64.whl
+pip install -r requirements.txt
 ```
 
 ## run the tool
