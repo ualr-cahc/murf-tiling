@@ -1,6 +1,6 @@
 # GeoTIFF to XYZ raster tiles
 
-python >= 3.10.5
+python 3.10
 
 ## setup
 ```

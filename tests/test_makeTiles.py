@@ -11,6 +11,7 @@ from tileTools import makeTiles
 TESTS = Path("./tests").resolve()
 OUTPUT = TESTS / "output"
 TIFFS = TESTS / "TIFFs"
+EXPECTED_OUTPUT = TESTS / "expected_output.txt"
 # TIFFS = Path("./logs/TIFFs")
 
 
@@ -27,6 +28,7 @@ class test_makeTiles(unittest.TestCase):
 
     def tearDown(self) -> None:
         shutil.rmtree(OUTPUT)
+        ...
 
     def test_makeTiles(self):
         makeTiles.make_tiles(
@@ -34,3 +36,7 @@ class test_makeTiles(unittest.TestCase):
             output_folder=str(OUTPUT),
             database_name='tiling.db'
         )
+        with open(EXPECTED_OUTPUT) as expected_output:
+            for output in map(lambda x: x.strip(), expected_output.readlines()):
+                with self.subTest(output=output):
+                    self.assertTrue(Path(output).exists())

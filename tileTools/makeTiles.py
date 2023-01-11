@@ -68,7 +68,7 @@ def _make_tile_layer(translated_file_path: str,
                      min_zoom: int = 8,
                      max_zoom: Optional[int] = None,
                      processes: Optional[int] = None,
-                     xyz: bool = True) -> dict[str, int | str]:
+                     xyz: bool = True) -> dict[str, int | str | None]:
     """Create a raster tile layer from a single GeoTIFF file using
     gdal2tile.
 
@@ -238,7 +238,7 @@ def make_tiles_from_list(input_filepaths: list[str],
 
     logger.debug("Looping through input_filepaths.")
     for input_filepath in map(Path, input_filepaths):
-        
+
         logger.debug(f"Processing input filepath {input_filepath}")
         if input_filepath.suffix != ".tif":
             logger.debug(f"Skipping non-tif file: {input_filepath}.")
@@ -255,30 +255,31 @@ def make_tiles_from_list(input_filepaths: list[str],
                      f"layer_output_folder: {layer_output_folder}")
         # only try to translate a file if the
         # translated file doesn't already exist
-        if translated_file_path not in translate_output_folder.iterdir():
+        if translated_file_path in translate_output_folder.iterdir():
+            os.remove(translated_file_path)
             # Try to translate, and log errors without exiting.
             # Some layers won't translate due to problems with the file.
-            if _is_color_mapped(str(input_filepath)):
-                rgbExpand = "rgb"
-            else:
-                rgbExpand = None
+        if _is_color_mapped(str(input_filepath)):
+            rgbExpand = "rgb"
+        else:
+            rgbExpand = None
 
-            try:
-                logger.debug(f"Translating {translated_file_path} to bytes.")
+        try:
+            logger.debug(f"Translating {translated_file_path} to bytes.")
 
-                Translate(str(translated_file_path),
-                          str(input_filepath),
-                          outputType=GDT_Byte,
-                          rgbExpand=rgbExpand)
+            Translate(str(translated_file_path),
+                      str(input_filepath),
+                      outputType=GDT_Byte,
+                      rgbExpand=rgbExpand)
 
-            except Exception:
-                # If an error occurs in translation, log it,
-                # stop trying to process this input file,
-                # and move on to the next
-                error = traceback.format_exc()
-                logger.debug(error)
+        except Exception:
+            # If an error occurs in translation, log it,
+            # stop trying to process this input file,
+            # and move on to the next
+            error = traceback.format_exc()
+            logger.debug(error)
 
-                break
+            break
 
         # ensure layer output directory exists
         if not layer_output_folder.is_dir():
@@ -289,7 +290,7 @@ def make_tiles_from_list(input_filepaths: list[str],
         try:
             logger.info(f"Making tile layer for {layer_name}")
 
-            database_data: dict[str, int | str] = _make_tile_layer(
+            database_data = _make_tile_layer(
                 str(translated_file_path),
                 str(layer_output_folder),
                 batch,

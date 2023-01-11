@@ -105,7 +105,7 @@ class Database:
         self.connection.close()
 
     def insert(self, table_name: str,
-               items_to_insert: dict[str | int, str | int | None]):
+               items_to_insert: dict[str, str | int | None]):
         # self._verify_table(table_name)
         self.tables[table_name].insert(items_to_insert)
 
