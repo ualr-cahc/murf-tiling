@@ -110,7 +110,6 @@ def _make_tile_layer(translated_file_path: str,
     gdal2tile_args += [str(translated_file_path), str(layer_output_folder)]
 
     logger.debug(f"Begin tiling. Args: {gdal2tile_args}")
-
     begin = perf_counter_ns()
     gdal2tiles.main(gdal2tile_args)
     # if it takes longer than one minute to render a set,
@@ -277,8 +276,9 @@ def make_tiles_from_list(input_filepaths: list[str],
             # stop trying to process this input file,
             # and move on to the next
             error = traceback.format_exc()
-            logger.debug(error)
-
+            logger.error(error)
+            logger.debug(f"Skipping file: {input_filepath}")
+            print(f"Skipping file: {input_filepath}")
             break
 
         # ensure layer output directory exists
@@ -289,7 +289,7 @@ def make_tiles_from_list(input_filepaths: list[str],
         # but remove it if an error is raised before it completes.
         try:
             logger.info(f"Making tile layer for {layer_name}")
-
+            print(f"Tiling: {layer_name}")
             database_data = _make_tile_layer(
                 str(translated_file_path),
                 str(layer_output_folder),
@@ -320,6 +320,8 @@ def make_tiles_from_list(input_filepaths: list[str],
         except Exception:
             error = traceback.format_exc().replace("\n", ";")
             logger.error(error)
+            logger.debug(f"Skipping file: {input_filepath}")
+            print(f"Skipping file: {input_filepath}")
             rmtree(layer_output_folder)
 
 

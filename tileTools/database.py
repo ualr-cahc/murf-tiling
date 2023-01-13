@@ -24,7 +24,7 @@ class Table:
         self.database_connection = database_connection
         self.create_table(columns, primary_key)
 
-    def insert(self, items_to_insert: dict[str | int, str | int | None]):
+    def insert(self, items_to_insert: dict[str, str | int | None]):
         """insert items into table"""
 
         keys = ", ".join(f"{key}" for key in items_to_insert.keys())
