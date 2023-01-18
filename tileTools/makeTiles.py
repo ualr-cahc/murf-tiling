@@ -17,6 +17,8 @@ from osgeo.gdal import GDT_Byte, Translate
 from osgeo_utils import gdal2tiles
 
 from tileTools.database import Database, NewColumn
+from tileTools.setup_logging import root_logger
+
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +257,8 @@ def make_tiles_from_list(input_filepaths: list[str],
         # only try to translate a file if the
         # translated file doesn't already exist
         if translated_file_path in translate_output_folder.iterdir():
+            logging.debug("Removing pre-existing translated file: "
+                          f"{translated_file_path}")
             os.remove(translated_file_path)
             # Try to translate, and log errors without exiting.
             # Some layers won't translate due to problems with the file.
@@ -278,7 +282,6 @@ def make_tiles_from_list(input_filepaths: list[str],
             error = traceback.format_exc()
             logger.error(error)
             logger.debug(f"Skipping file: {input_filepath}")
-            print(f"Skipping file: {input_filepath}")
             break
 
         # ensure layer output directory exists
@@ -321,7 +324,6 @@ def make_tiles_from_list(input_filepaths: list[str],
             error = traceback.format_exc().replace("\n", ";")
             logger.error(error)
             logger.debug(f"Skipping file: {input_filepath}")
-            print(f"Skipping file: {input_filepath}")
             rmtree(layer_output_folder)
 
 
@@ -331,7 +333,8 @@ def make_tiles(input_folder: str,
                max_zoom: int | None = None,
                xyz: bool = True,
                processes: int | None = None,
-               database_name: Optional[str] = None
+               database_name: Optional[str] = None,
+               log: bool = True
                ):
     """Make raster tiles for all GeoTIFFs in a directory.
 
@@ -354,6 +357,10 @@ def make_tiles(input_folder: str,
         the incomplete layer is discarded before the program stops. Same goes
         for unexpected errors during tiling.
     """
+
+    if log is True:
+        root_logger(str(Path(output_folder)/"tiling.log"))
+
     logger.debug("Beginning make_tiles. "
                  f"args: {locals()}")
 

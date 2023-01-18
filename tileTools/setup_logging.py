@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 
-def root_logger() -> logging.Logger:
+def root_logger(log_path: str) -> logging.Logger:
 
     log_format = logging.Formatter(
         '%(asctime)s - '
@@ -15,11 +15,10 @@ def root_logger() -> logging.Logger:
         '%(message)s'
     )
     log_folder = Path("./logs")
-    log_file = log_folder/"test_tiling.log"
     if not log_folder.exists():
         log_folder.mkdir()
     log_file_handler = logging.FileHandler(
-        log_file,
+        log_path,
         mode='a'
     )
     log_file_handler.setLevel(logging.DEBUG)
