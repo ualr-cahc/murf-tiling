@@ -19,15 +19,15 @@ Through much research and pondering, I eventually devised a way to calculate the
 
     $w =$ pixel width
 
-    $ C = $ equatorial circumference of the earth in meters $= 40,075,016.686$
+    $C =$ equatorial circumference of the earth in meters $= 40,075,016.686$
 
-    $ l = $ latitude of the GeoTIFF in radians
+    $l =$ latitude of the GeoTIFF in radians
 
-    $ z = $ zoom level
+    $z =$ zoom level
 
 1. [OSM equation for horizontal width per pixel given zoom level](https://wiki.openstreetmap.org/wiki/Zoom_levels#:~:text=Distance%20per%20pixel%20math):
 
-    $ w = \frac{C \times \cos(l)}{2^{z+8}}$
+    $w = \frac{C \times \cos(l)}{2^{z+8}}$
 
 1. Rearrangement of the equation:
 
