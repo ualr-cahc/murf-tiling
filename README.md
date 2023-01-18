@@ -2,7 +2,7 @@
 
 python >= 3.10.7
 
-## setup
+## Setup
 ```
 git clone https://github.com/ualr-cahc/murf-tiling
 cd murf-tiling
@@ -10,8 +10,8 @@ python -m venv env
 env\Scripts\activate
 pip install -r requirements.txt
 ```
-
-## run the tool
+___
+## Run the tool
 
 * Basic implementation
 ```python
@@ -29,6 +29,9 @@ make_tiles(input_dir="tests/TIFFs",
            output_dir="tests/output",
            database_name='test_tiling.db')
 ```
+___
+## All available arguments
+
 
 ```python
 make_tiles(input_folder: str,
@@ -41,7 +44,6 @@ make_tiles(input_folder: str,
            )
 ```
 
-Arguments:
 ___
 **input_folder** *(str)*: 
 
@@ -49,7 +51,7 @@ Location of source GeoTIFFs.
 ___
 **output_folder** *(str)*: 
 
-Location to drop subfolders "translated" and "tiles" containing byte translated versions of the GeoTIFFs and the resulting tile sets, respectively.
+Location to drop sub-folders "translated" and "tiles" containing byte translated versions of the GeoTIFFs and the resulting tile sets, respectively.
 ___
 **min_zoom** *(int)*: 
 
