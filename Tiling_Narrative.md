@@ -17,7 +17,7 @@ Through much research and pondering, I eventually devised a way to calculate the
 
 1. Variables:
 
-    $ w = $ pixel width
+    $w =$ pixel width
 
     $ C = $ equatorial circumference of the earth in meters $= 40,075,016.686$
 
