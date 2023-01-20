@@ -249,6 +249,11 @@ def make_tiles_from_list(input_filepaths: list[str],
         translated_file_path = translate_output_folder / filename
         layer_output_folder = tile_output_folder / layer_name
 
+        if layer_output_folder.exists():
+            logger.debug(f"Layer already rendered, skipping: "
+                         f"{layer_name}")
+            continue
+
         logger.debug(f"input_filepath: {input_filepath}, "
                      f"filename: {filename}, "
                      f"layer_name: {layer_name}, "
@@ -262,7 +267,15 @@ def make_tiles_from_list(input_filepaths: list[str],
             os.remove(translated_file_path)
             # Try to translate, and log errors without exiting.
             # Some layers won't translate due to problems with the file.
-        if _is_color_mapped(str(input_filepath)):
+        try:
+            color_mapped = False
+            color_mapped = _is_color_mapped(str(input_filepath))
+        except Exception as err:
+            logger.error(err)
+            logger.debug(f"Skipping file: {input_filepath}")
+            continue
+
+        if color_mapped:
             rgbExpand = "rgb"
         else:
             rgbExpand = None
