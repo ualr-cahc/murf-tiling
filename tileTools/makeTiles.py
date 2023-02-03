@@ -23,7 +23,7 @@ from tileTools.setup_logging import root_logger
 logger = logging.getLogger(__name__)
 
 
-def _find_max_zoom(translated_file_path: str):
+def _find_max_zoom(file_path: str):
     """Determine the maximum tile zoom level for a single GeoTIFF.
     The result is calculated by finding the floating point 'zoom-level'
     of the original GeoTIFF and rounding up to the next integer zoom value.
@@ -38,7 +38,8 @@ def _find_max_zoom(translated_file_path: str):
         int: Maximum zoom level.
     """
 
-    with rasterio.open(translated_file_path) as raster:
+    logger.debug("Beginning find_max_zoom.")
+    with rasterio.open(file_path) as raster:
         if isinstance(raster.transform, rasterio.Affine):
 
             original_pixel_width = abs(raster.transform[0])
@@ -218,6 +219,8 @@ def make_tiles_from_list(input_filepaths: list[str],
                          database_name: Optional[str] = None
                          ):
 
+    max_zoom_internal = None
+
     args = {k: v for k, v in locals().items() if k != "input_filepaths"}
 
     logger.debug(f"Beginning make_tiles_from_list. args: {args}")
@@ -239,11 +242,16 @@ def make_tiles_from_list(input_filepaths: list[str],
 
     logger.debug("Looping through input_filepaths.")
     for input_filepath in map(Path, input_filepaths):
-
         logger.debug(f"Processing input filepath {input_filepath}")
         if input_filepath.suffix != ".tif":
             logger.debug(f"Skipping non-tif file: {input_filepath}.")
             continue
+        if max_zoom is None:
+            try:
+                max_zoom_internal = _find_max_zoom(str(input_filepath))
+            except Exception as err:
+                logger.error(err)
+                continue
         filename = input_filepath.name
         layer_name = input_filepath.stem
         translated_file_path = translate_output_folder / filename
@@ -311,7 +319,7 @@ def make_tiles_from_list(input_filepaths: list[str],
                 str(layer_output_folder),
                 batch,
                 min_zoom,
-                max_zoom,
+                max_zoom_internal,
                 xyz=xyz,
                 processes=processes
             )
