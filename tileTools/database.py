@@ -80,29 +80,80 @@ class Table:
         self.execute_statement(
             create_table_statement, tuple()
         )
+    
+    def list_columns(self):
+
+        select_columns_statement = f"select * from {self.name}"
+        logger.debug("Executing statement. "
+                     f"Statement: {select_columns_statement}")
+
+        with self.database_connection as connection:
+            cursor = connection.execute(select_columns_statement)
+            existing_columns = list(map(lambda x: x[0], cursor.description))
+
+        logger.debug(f"Existing columns: {existing_columns}")
+
+        return existing_columns
+
+    def add_columns(self, columns: list[NewColumn]):
+        
+        select_columns_statement = f"select * from {self.name};"
+        logger.debug("Executing statement. "
+                     f"Statement: {select_columns_statement}")
+
+        with self.database_connection as connection:
+            cursor = connection.execute(select_columns_statement)
+            existing_columns = list(map(lambda x: x[0], cursor.description))
+
+        logger.debug(f"Existing columns: {existing_columns}")
+
+        for column in columns:
+            if column.name not in existing_columns:
+                
+                add_column_statement = (f"ALTER TABLE {self.name} ADD COLUMN "
+                                        f"{column.name} {column.type} "
+                                        f"{column.options};")
+                logger.debug(f"Adding column to table: "
+                             f"{add_column_statement}")
+
+                self.execute_statement(add_column_statement, tuple())
 
 
 class Database:
 
-    def __init__(self, database_name: str):
-        logger.debug(f"Initializing database: {database_name}")
-        self.connection = sqlite3.connect(f"{database_name}")
-        self.database_name = database_name
+    def __init__(self, database_path: str):
+        logger.debug(f"Initializing database: {database_path}")
+        self.connection = sqlite3.connect(f"{database_path}")
+        self.database_path = database_path
         self.tables: dict[str, Table] = {}
 
     def add_table(self, table_name: str, columns: list[NewColumn],
                   primary_key: Optional[tuple[str, ...]] = None):
-
-        logger.debug(f"Adding table '{table_name}' to database "
-                     f"'{self.database_name}'.")
+        
+        list_tables_query = ("SELECT name FROM sqlite_master "
+                             "WHERE type='table';")
+        with self.connection as connection:
+            cursor = connection.execute(list_tables_query)
+            tables = [table[0] for table in cursor.fetchall()]
+        
+        if table_name in tables:
+            logger.debug("Table already exists in "
+                         f"{self.database_path}: {tables}")
+        else:
+            logger.debug(f"Adding table '{table_name}' to database "
+                         f"'{self.database_path}'.")
         self.tables[table_name] = Table(self.connection,
                                         table_name,
                                         columns,
                                         primary_key)
+            
 
     def close(self):
 
         self.connection.close()
+
+    def add_columns(self, table_name: str, new_columns:list[NewColumn]):
+        self.tables[table_name].add_columns(new_columns)
 
     def insert(self, table_name: str,
                items_to_insert: dict[str, str | int | None]):
@@ -114,7 +165,7 @@ class Database:
                items_to_update: dict[str, str | int]):
 
         # self._verify_table(table_name)
-        self.tables[table_name].update(items_to_update, key)
+        self.tables[table_name].update(key, items_to_update)
 
     def delete(self, table_name: str, key: dict[str, str]):
 

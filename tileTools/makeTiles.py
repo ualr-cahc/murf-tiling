@@ -8,7 +8,7 @@ import os
 import traceback
 from math import ceil, cos, log2, radians
 from pathlib import Path
-from shutil import rmtree
+import shutil
 from time import perf_counter_ns
 from typing import Optional
 
@@ -21,6 +21,90 @@ from tileTools.setup_logging import root_logger
 
 
 logger = logging.getLogger(__name__)
+
+
+def _get_tile_layer_count_and_size(layer_directory: Path):
+
+    size = 0
+    tile_count = 0
+    for root, dirs, files in os.walk(layer_directory):
+        for file in files:
+            size += os.stat(os.path.join(root, file)).st_size
+            tile_count += 1
+        for directory in dirs:
+            size += os.stat(os.path.join(root, directory)).st_size
+    
+
+    return tile_count, size
+
+
+def _get_tile_count(layer_directory: Path):
+    
+    tile_count = 0
+    for _, _, files in os.walk(layer_directory):
+        for _ in files:
+            tile_count += 1
+
+    return tile_count
+
+
+def _get_tile_size(layer_directory: Path):
+    tile_size = 0
+    for root, dirs, files in os.walk(layer_directory):
+        for file in files:
+            tile_size += os.stat(os.path.join(root, file)).st_size
+        for dir in dirs:
+            tile_size += os.stat(os.path.join(root, dir)).st_size
+
+    return tile_size
+
+def add_tile_data_to_database(tiles_directory: str, database_path: str):
+
+    database = _initialize_tile_count_size_database(database_path)
+
+    with database.connection as connection:
+        cursor = connection.execute("select layer_name from make_tile_layer;")
+        layer_names = [result[0] for result in cursor.fetchall()]
+
+    for layer in Path(tiles_directory).iterdir():
+        if layer.name in layer_names:
+            with database.connection as connection:
+                cursor = connection.execute("select * from make_tile_layer where "
+                                            f"layer_name=?;", (layer.name,))
+                columns = [item[0] for item in cursor.description]
+                
+                layer_data = dict(list(zip(columns, cursor.fetchall()[0])))
+
+                if (layer_data['tile_size_bytes'] is None
+                    and layer_data['tile_count'] is None):
+                    tile_count, tile_size = _get_tile_layer_count_and_size(layer)
+                    logger.debug("Adding size and count to database for layer "
+                                 f"{layer.name}: "
+                                 f"size: {tile_size}; count: {tile_count}")
+                    database.update('make_tile_layer',
+                                    {'layer_name': layer.name},
+                                    {'tile_size_bytes': tile_size,
+                                     'tile_count': tile_count})
+
+                elif layer_data['tile_size_bytes'] is None:
+                    tile_size = _get_tile_size(layer)
+                    logger.debug("Adding tile size to database for layer "
+                                 f"{layer.name}: {tile_size}")
+                    database.update('make_tile_layer',
+                                    {'layer_name': layer.name},
+                                    {'tile_size_bytes': tile_size})
+
+                elif layer_data['tile_count'] is None:
+                    tile_count = _get_tile_count(layer)
+                    logger.debug("Adding tile count to database for layer "
+                                 f"{layer.name}: {tile_count}")
+                    database.update('make_tile_layer',
+                                    {'layer_name': layer.name},
+                                    {'tile_count': tile_count})
+                
+                else:
+                    logger.debug("Tile size and count already exist for "
+                                 f"{layer.name}.")
 
 
 def _find_max_zoom(file_path: str):
@@ -169,10 +253,26 @@ def _is_color_mapped(raster_location: str) -> bool:  # type: ignore
                 raise err
 
 
-def _initialize_database(database_name: str):
+def _initialize_tile_count_size_database(database_path: str):
 
-    logger.debug(f"Initializing database {database_name}")
-    database = Database(database_name)
+    logger.debug(f"Initializing database {database_path}")
+    shutil.copy(database_path, database_path + ".backup")
+    database = _initialize_tiling_database(database_path)
+
+    new_columns = [
+        NewColumn('tile_size_bytes', 'integer'),
+        NewColumn('tile_count', 'integer')
+    ]
+
+    database.add_columns('make_tile_layer', new_columns)
+
+    return database
+
+
+def _initialize_tiling_database(database_path: str):
+
+    logger.debug(f"Initializing database {database_path}")
+    database = Database(database_path)
 
     make_tile_layer_columns = [
         NewColumn('batch', 'integer', 'NOT NULL'),
@@ -225,7 +325,7 @@ def make_tiles_from_list(input_filepaths: list[str],
 
     logger.debug(f"Beginning make_tiles_from_list. args: {args}")
     if database_name is not None:
-        database = _initialize_database(database_name)
+        database = _initialize_tiling_database(database_name)
         batch = _get_batch_number(database)
     else:
         database = None
@@ -337,7 +437,7 @@ def make_tiles_from_list(input_filepaths: list[str],
         # If the user raises a KeyboardInterrupt log it,
         # remove the incomplete layer, and exit.
         except KeyboardInterrupt:
-            rmtree(layer_output_folder)
+            shutil.rmtree(layer_output_folder)
             raise KeyboardInterrupt
         # If an unexpected error occurs, log it, remove the incomplete layer,
 
@@ -345,7 +445,7 @@ def make_tiles_from_list(input_filepaths: list[str],
             error = traceback.format_exc().replace("\n", ";")
             logger.error(error)
             logger.debug(f"Skipping file: {input_filepath}")
-            rmtree(layer_output_folder)
+            shutil.rmtree(layer_output_folder)
 
 
 def make_tiles(input_folder: str,
